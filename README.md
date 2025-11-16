@@ -1,96 +1,52 @@
-# TeleVuer
+Teleoperation System (Meta Quest 3 → Kinova Gen3)
+Overview
 
-The TeleVuer library is a specialized version of the Vuer library, designed to enable XR device-based teleoperation of Unitree Robotics robots. This library acts as a wrapper for Vuer, providing additional adaptations specifically tailored for Unitree Robotics. By integrating XR device capabilities, such as hand tracking and controller tracking, TeleVuer facilitates seamless interaction and control of robotic systems in immersive environments.
+This project implements a full teleoperation pipeline using a Meta Quest 3 (TeleVuer) VR interface to control a Kinova Gen3 robot arm in real time.
+Communication between VR and robot is achieved via shared memory, and robot-side control uses the Kortex API.
 
-Currently, this module serves as a core component of the [xr_teleoperate](https://github.com/unitreerobotics/xr_teleoperate) library, offering advanced functionality for teleoperation tasks. It supports various XR devices, including Apple Vision Pro, Meta Quest3, Pico 4 Ultra Enterprise etc., ensuring compatibility and ease of use for robotic teleoperation applications.
+The system includes:
 
-## Install
+VR → Shared Memory Producer (test2.py)
+Kinova Teleoperation Controller (twist2.py) 
+ROS2 Image Viewer for Kinova Vision(ros2 launch kinova_vision kinova_vision.launch)
 
-```bash
-cd televuer
-pip install -e .
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem
-```
+1. Environment Setup
 
-## Test
+Required:
 
-```bash
-python _test_televuer.py 
-# or 
-python _test_tv_wrapper.py
+Ubuntu 22.04
+ROS 2 Humble
+Kinova Gen3 + Kortex API Python examples installed
+(twist2.py expects the path: /home/icatheon/Kinova-kortex2_Gen3_G3L/api_python/examples)
 
-# First, use Apple Vision Pro or Pico 4 Ultra Enterprise to connect to the same Wi-Fi network as your computer.
-# Next, open safari / pico browser, enter https://host machine's ip:8012/?ws=wss://host machine's ip:8012
-# for example, https://192.168.123.2:8012?ws=wss://192.168.123.2:8012
-# Use the appropriate method (hand gesture or controller) to click the "Virtual Reality" button in the bottom-left corner of the screen.
+Python dependencies:
+numpy
+scipy
+opencv-python
+pyrealsense2 (if using Realsense)
+televuer
+Built-in: multiprocessing, csv, time
 
-# Press Enter in the terminal to launch the program.
-```
+Shared Memory Layout
+cmd (float64 × 12)
+Index	Meaning
+0–2	VR linear velocity estimate (vx, vy, vz)
+3–5	VR angular velocity (unused in final version)
+6	right trigger value (0.0–1.0) – used for gripper control
+7	right A button (0 or 1)
+8	right B button (0 or 1)
+9	right thumbstick x
+10	right thumbstick y
+11	left A button (reserved, e.g., for camera switching)
+televuer_img
 
-## Version History
+Stereo buffer: (480, 1280, 3) RGB, uint8
+Used for VR video display (optional).
 
-`vuer==0.0.32rc7`
+3.  Kinova Vision Camera via ROS2
+Start Kinova Vision:
+source /opt/ros/humble/setup.bash
+source ~/colcon_ws/install/setup.bash
+ros2 launch kinova_vision kinova_vision.launch.py
 
-- **Functionality**:
-  - Hand tracking works fine.
-  - Controller tracking is not supported.
 
----
-
-`vuer==0.0.35`
-
-- **Functionality**:
-  - AVP hand tracking works fine.
-  - PICO hand tracking works fine, but the right eye occasionally goes black for a short time at startup.
-
----
-
-`vuer==0.0.36rc1` to `vuer==0.0.42rc16`
-
-- **Functionality**:
-  - Hand tracking only shows a flat RGB image (no stereo view).
-  - PICO hand and controller tracking behave the same, with occasional right-eye blackouts at startup.
-  - Hand or controller markers are displayed as either black boxes (`vuer==0.0.36rc1`) or RGB three-axis color coordinates (`vuer==0.0.42rc16`).
-
----
-
-`vuer==0.0.42` to `vuer==0.0.45`
-
-- **Functionality**:
-  - Hand tracking only shows a flat RGB image (no stereo view).
-  - Unable to retrieve hand tracking data.
-  - Controller tracking only shows a flat RGB image (no stereo view), but controller data can be retrieved.
-
----
-
-`vuer==0.0.46` to `vuer==0.0.56`
-
-- **Functionality**:
-  - AVP hand tracking works fine.
-  - In PICO hand tracking mode:
-    - Using a hand gesture to click the "Virtual Reality" button causes the screen to stay black and stuck loading.
-    - Using the controller to click the button works fine.
-  - In PICO controller tracking mode:
-    - Using the controller to click the "Virtual Reality" button causes the screen to stay black and stuck loading.
-    - Using a hand gesture to click the button works fine.
-  - Hand marker visualization is displayed as RGB three-axis color coordinates.
-
----
-
-`vuer==0.0.60`
-- **Recommended Version**
-
-- **Functionality**:
-  - Stable functionality with good compatibility.
-  - Most known issues have been resolved.
-- **References**:
-  - [GitHub Issue #53](https://github.com/unitreerobotics/xr_teleoperate/issues/53)
-  - [GitHub Issue #45](https://github.com/vuer-ai/vuer/issues/45)
-  - [GitHub Issue #65](https://github.com/vuer-ai/vuer/issues/65)
-
----
-
-## Notes
-- **Recommended Version**: Use `vuer==0.0.60` for the best functionality and stability.
-- **Black Screen Issue**: On PICO devices, choose the appropriate interaction method (hand gesture or controller) based on the mode to avoid black screen issues.# meta_streaming
-# meta_streaming
