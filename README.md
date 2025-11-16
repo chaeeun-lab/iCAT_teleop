@@ -67,7 +67,7 @@ Terminals / processes:
 
 
 
-##Linear motion
+### Linear motion
 
 Uses VR–derived linear velocities from cmd[0:3]
 
@@ -95,7 +95,7 @@ These are filtered (deg/s) and clamped, then: Integrated in radians internally f
 
 Sent to the robot as angular velocity (Twist) in degrees per second, per Kortex API’s convention
 
-##Gripper control
+### Gripper control
 
 cmd[6] is treated as a gripper position fraction
 
@@ -105,14 +105,14 @@ When the value changes by more than a small epsilon, twist2.py calls:
 SendGripperCommand() in GRIPPER_POSITION mode with that fraction
 
 
-##Left controller X button (camera switching)
+### Left controller X button (camera switching)
 
 Handled inside camera_mux_to_shm.py
 Toggles which camera feed (Realsense vs Kinova Vision) is written into televuer_img
 The VR view switches accordingly inside TeleVuer.
 
 
-##Typical terminal layout
+### Typical terminal layout
 
 Terminal 1 – ROS 2 + Kinova Vision
 
