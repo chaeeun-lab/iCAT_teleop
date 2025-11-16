@@ -1,85 +1,141 @@
-# Teleoperation between Meta Quset3 <----> kinova gen3
+## Teleoperation between Meta Quest 3 ↔ Kinova Gen3
 
-## How to Run the Full Teleoperation Pipeline
+This section describes the end-to-end teleoperation pipeline from the **Kinova Vision camera** and **Meta Quest 3 (TeleVuer)** to the **Kinova Gen3** arm.
 
-This section describes the end–to–end flow from the Kinova Vision camera and Meta Quest 3 (TeleVuer) to the Kinova Gen3 arm.
+---
 
-### Overview of the runtime pipeline
+## Overview of the runtime pipeline
 
-Terminals / processes:
+We use multiple terminals / processes:
 
-1. Terminal 1 (ROS 2)
-   Run the Kinova Vision ROS2 driver:
-   ```bash
-   source /opt/ros/humble/setup.bash
-   source ~/colcon_ws/install/setup.bash
-   ros2 launch kinova_vision kinova_vision.launch.py
-   # This publishes the Kinova camera streams (e.g. /camera/color/image_raw, /camera/depth/image_raw).
+- **Terminal 1** – ROS 2 + Kinova Vision
+- **Terminal 2** – Camera multiplexer → shared memory (`camera_mux_to_shm.py`)
+- **Terminal 3** – TeleVuer producer (`test2.py`, shared memory + VR)
+- **Browser + Quest 3** – TeleVuer Web UI
+- **Terminal 4** – Kinova teleoperation controller (`twist2.py`)
 
-2. Bridge the camera stream(s) into the shared memory buffer used by TeleVuer(Camera multiplexer → shared memory):
-   ```bash
-   cd iCAT_teleop/test
-   python3 camera_mux_to_shm.py
+---
 
-   # Typical behavior (depending on your script implementation):
-   # Subscribes to the Kinova Vision ROS2 topics (and optionally Realsense RGB)
-   # Packs the selected camera view into the stereo buffer televuer_img
-   # Left controller X button is used to toggle between:
-   # Realsense RGB view<---->Kinova Vision RGB view
+## 1. Terminal 1 – ROS 2 / Kinova Vision
 
-3. Terminal 2 (TeleVuer producer, shared memory + VR)
-   Start the TeleVuer shared–memory producer and wait at the prompt:
-   ```bash
-   cd iCAT_teleop/test
-   python3 test2.py
+Run the Kinova Vision ROS 2 driver:
 
-   # The script will:
-   # Create the stereo image shared memory televuer_img with shape (480, 1280, 3)
-   # Create the command shared memory cmd (for velocities, buttons, gripper, etc.)
-   # Initialize TeleVuerWrapper and block on:
-   # Press Enter to start TeleVuer producer...
-   # Do not press Enter yet. We will start the camera multiplexer first.
-  
+```bash
+source /opt/ros/humble/setup.bash
+source ~/colcon_ws/install/setup.bash
+
+ros2 launch kinova_vision kinova_vision.launch.py
+This publishes the Kinova camera streams, for example:
+
+/camera/color/image_raw
+
+/camera/depth/image_raw
+
+2. Terminal 2 – Camera multiplexer → Shared Memory
+Bridge the camera stream(s) into the shared memory buffer used by TeleVuer:
+
+bash
+코드 복사
+cd iCAT_teleop/test
+python3 camera_mux_to_shm.py
+Typical behavior (depending on the script implementation):
+
+Subscribes to the Kinova Vision ROS 2 topics (and optionally Realsense RGB)
+
+Packs the selected camera view into the stereo buffer televuer_img
+(shape: (480, 1280, 3), RGB)
+
+The left controller X button is used to toggle between:
+
+Realsense RGB view
+
+Kinova Vision RGB view
+
+So pressing X on the left controller switches the VR camera view.
+
+3. Terminal 3 – TeleVuer producer (shared memory + VR)
+Start the TeleVuer shared–memory producer and wait at the prompt:
+
+bash
+코드 복사
+cd iCAT_teleop/test
+python3 test2.py
+The script will:
+
+Create the stereo image shared memory televuer_img with shape (480, 1280, 3)
+
+Create the command shared memory cmd (for velocities, buttons, gripper, etc.)
+
+Initialize TeleVuerWrapper and block with:
+
+text
+코드 복사
+Press Enter to start TeleVuer producer...
+👉 Do not press Enter yet.
+First, connect TeleVuer from the browser + Quest 3.
 
 4. TeleVuer Web UI (Browser + Quest 3)
+On the host PC, open a browser and connect to the TeleVuer web interface:
 
-   On the host PC, open a browser and connect to the TeleVuer web interface:
+text
+코드 복사
+http://<THIS_PC_IP>:<PORT>/
+Use the same IP/port configured in your TeleVuer setup.
 
-   http://<THIS_PC_IP>:<PORT>/ (Use the same IP/port configured in your TeleVuer setup.)
+Then:
 
-   Put on the Meta Quest 3, connect to that TeleVuer room / session, and confirm that:
-   Controller pose and button data are reaching the PC (no errors in test2.py).
+Put on the Meta Quest 3.
+
+Connect to the same TeleVuer room / session.
+
+Confirm that:
+
+The stereo video is visible in VR (coming from televuer_img).
+
+Controller pose and button data are reaching the PC (no errors in test2.py).
 
 5. Back to Terminal 3 – start the producer loop
-   nce the TeleVuer web UI + Quest are connected and you see motion data arriving, go back to Terminal 2 and press Enter in test2.py:
+Once the TeleVuer Web UI + Quest 3 are connected and you see motion data arriving:
 
-   Press Enter to start TeleVuer producer...
-   Now test2.py will continuously:
-   Read right–hand pose from TeleVuer
-   Compute linear / angular velocities
-   Write them and the button/trigger states into the cmd shared memory
+Go back to Terminal 3 (where test2.py is running).
 
-6. Terminal 4 (Kinova teleoperation controller – twist2.py)
+Press Enter at:
 
-   Finally, run the teleoperation controller that reads from shared memory and sends Twist + gripper commands to the Kinova Gen3:
-    ```bash
-     cd iCAT_teleop/test 
-     python3 twist2.py
+text
+코드 복사
+Press Enter to start TeleVuer producer...
+From this point, test2.py will continuously:
 
+Read the right–hand pose from TeleVuer.
 
+Compute linear / angular velocities.
 
+Write:
 
-### Linear motion
+Linear velocity,
 
-Uses VR–derived linear velocities from cmd[0:3]
+Angular velocity (if used),
 
-Passes them through an admittance–like filter and clamps to a safe max speed
+Button and trigger states
+into the cmd shared memory.
 
-Sends them as TwistCommand.twist.linear_* in the TOOL frame
+6. Terminal 4 – Kinova teleoperation controller (twist2.py)
+Finally, run the teleoperation controller that reads from shared memory and sends Twist + gripper commands to the Kinova Gen3:
 
-Angular motion (deg/s, button + stick based)
+bash
+코드 복사
+cd iCAT_teleop/test
+python3 twist2.py
+6.1 Linear motion
+Uses VR–derived linear velocities from cmd[0:3].
 
-VR angular velocity from TeleVuer is ignored. Instead, the script generates angular velocity in degrees per second using buttons and thumbstick:
+Passes them through an admittance–like filter and clamps to a safe maximum speed.
+
+Sends the result as TwistCommand.twist.linear_* in the TOOL reference frame.
+
+6.2 Angular motion (deg/s, button + stick based)
+Angular velocity from TeleVuer itself is ignored.
+Instead, twist2.py generates angular velocity (in degrees per second) using buttons and thumbstick:
 
 cmd[7] (right A button) > 0.5 → pitch +5 deg/s
 
@@ -93,44 +149,44 @@ cmd[10] (right thumbstick y) ≥ +0.5 → roll +5 deg/s
 
 cmd[10] ≤ -0.5 → roll -5 deg/s
 
-These are filtered (deg/s) and clamped, then: Integrated in radians internally for the desired pose logging
+These angular velocities are:
 
-Sent to the robot as angular velocity (Twist) in degrees per second, per Kortex API’s convention
+Filtered in deg/s and clamped to a safe limit.
 
-### Gripper control
+Integrated internally in radians for desired pose estimation and logging.
 
-cmd[6] is treated as a gripper position fraction
+Sent to the robot as angular velocity (Twist) according to the Kortex API convention (degrees per second).
 
-0.0 → fully open 1.0 → fully closed
+6.3 Gripper control
+cmd[6] is treated as a gripper position fraction:
+
+0.0 → fully open
+
+1.0 → fully closed
 
 When the value changes by more than a small epsilon, twist2.py calls:
-SendGripperCommand() in GRIPPER_POSITION mode with that fraction
 
+SendGripperCommand() in GRIPPER_POSITION mode
 
-### Left controller X button (camera switching)
+Using the fraction in [0.0, 1.0] as the target gripper position.
 
-Handled inside camera_mux_to_shm.py
-Toggles which camera feed (Realsense vs Kinova Vision) is written into televuer_img
-The VR view switches accordingly inside TeleVuer.
+7. Typical terminal layout (summary)
+Terminal 1 – ros2 launch kinova_vision kinova_vision.launch.py
 
+Terminal 2 – python3 camera_mux_to_shm.py (camera → shared memory, left X to toggle)
 
-### Typical terminal layout
+Terminal 3 – python3 test2.py (TeleVuer producer, shared memory)
 
-Terminal 1 – ROS 2 + Kinova Vision
+Browser + Quest 3 – TeleVuer Web UI session
 
-Terminal 2 – test2.py (TeleVuer producer, shared memory)
-
-Terminal 3 – camera_mux_to_shm.py (camera → shared memory, X button toggle)
-
-Browser + Quest 3 – TeleVuer web UI
-
-Terminal 4 – twist2.py (Kinova teleoperation controller)
+Terminal 4 – python3 twist2.py (Kinova teleoperation controller)
 
 Once all four terminals are running and the Quest 3 is connected, you should be able to:
 
-Move the right controller to command the end effector translation
+Move the right controller to command end-effector translation.
 
-Use A/B + thumbstick for orientation control (roll/pitch/yaw)
+Use right A/B buttons + right thumbstick for orientation control (roll / pitch / yaw).
 
-Use trigger / gripper fraction for closing/opening the gripper
-Use left X to switch between camera views in VR.
+Use the trigger / gripper fraction for opening/closing the gripper.
+
+Use left X to switch between camera views in VR (Realsense ↔ Kinova Vision).
