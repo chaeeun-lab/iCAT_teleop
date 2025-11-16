@@ -19,11 +19,11 @@ Terminals / processes:
    cd iCAT_teleop/test
    python3 camera_mux_to_shm.py
 
-   ##Typical behavior (depending on your script implementation):
-   ##Subscribes to the Kinova Vision ROS2 topics (and optionally Realsense RGB)
-   ##Packs the selected camera view into the stereo buffer televuer_img
-   ##Left controller X button is used to toggle between:
-   ##Realsense RGB view<---->Kinova Vision RGB view
+   #Typical behavior (depending on your script implementation):
+   #Subscribes to the Kinova Vision ROS2 topics (and optionally Realsense RGB)
+   #Packs the selected camera view into the stereo buffer televuer_img
+   #Left controller X button is used to toggle between:
+   #Realsense RGB view<---->Kinova Vision RGB view
 
 3. Terminal 2 (TeleVuer producer, shared memory + VR)
    Start the TeleVuer shared–memory producer and wait at the prompt:
@@ -31,12 +31,12 @@ Terminals / processes:
    cd iCAT_teleop/test
    python3 test2.py
 
-   ##The script will:
-   ##Create the stereo image shared memory televuer_img with shape (480, 1280, 3)
-   ##Create the command shared memory cmd (for velocities, buttons, gripper, etc.)
-   ##Initialize TeleVuerWrapper and block on:
-   ##Press Enter to start TeleVuer producer...
-   ##Do not press Enter yet. We will start the camera multiplexer first.
+   #The script will:
+   #Create the stereo image shared memory televuer_img with shape (480, 1280, 3)
+   #Create the command shared memory cmd (for velocities, buttons, gripper, etc.)
+   #Initialize TeleVuerWrapper and block on:
+   #Press Enter to start TeleVuer producer...
+   #Do not press Enter yet. We will start the camera multiplexer first.
   
 
 4. TeleVuer Web UI (Browser + Quest 3)
