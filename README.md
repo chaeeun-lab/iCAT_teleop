@@ -1,6 +1,7 @@
 ## Teleoperation between Meta Quest 3 ↔ Kinova Gen3
 
-This section describes the end-to-end teleoperation pipeline from the **Kinova Vision camera** and **Meta Quest 3 (TeleVuer)** to the **Kinova Gen3** arm.
+This section describes the end-to-end teleoperation pipeline from the **Kinova Vision camera** and Meta Quest 3 (TeleVuer) to the Kinova Gen3 arm.
+
 
 ---
 
@@ -8,11 +9,11 @@ This section describes the end-to-end teleoperation pipeline from the **Kinova V
 
 We use multiple terminals / processes:
 
-- **Terminal 1** – ROS 2 + Kinova Vision
-- **Terminal 2** – Camera multiplexer → shared memory (`camera_mux_to_shm.py`)
-- **Terminal 3** – TeleVuer producer (`test2.py`, shared memory + VR)
-- **Browser + Quest 3** – TeleVuer Web UI
-- **Terminal 4** – Kinova teleoperation controller (`twist2.py`)
+- **Terminal 1 – ROS 2 + Kinova Vision
+- **Terminal 2 – Camera multiplexer → shared memory (`camera_mux_to_shm.py`)
+- **Terminal 3 – TeleVuer producer (`test2.py`, shared memory + VR)
+- **Browser + Quest 3 – TeleVuer Web UI
+- **Terminal 4 – Kinova teleoperation controller (`twist2.py`)
 
 ---
 
