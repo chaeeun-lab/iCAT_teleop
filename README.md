@@ -2,6 +2,7 @@
 
 This section describes the end-to-end teleoperation pipeline from the **Kinova Vision camera** and Meta Quest 3 (TeleVuer) to the Kinova Gen3 arm.
 
+https://github.com/user-attachments/assets/39013544-9750-41d9-a20a-ba50cde4bcb7
 
 ---
 
